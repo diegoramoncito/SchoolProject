@@ -4,12 +4,15 @@ package ec.gob.pichincha.turismopichincha.presentation.Screens
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -31,14 +34,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberImagePainter
 import ec.gob.pichincha.turismopichincha.R
 import ec.gob.pichincha.turismopichincha.navigation.Screen
 import ec.gob.pichincha.turismopichincha.presentation.utilities.Utils
 import ec.gob.pichincha.turismopichincha.ui.theme.TurismoPichinchaTheme
 import ec.gob.pichincha.turismopichincha.ui.theme.GrayBackgroundComponents
 import ec.gob.pichincha.turismopichincha.ui.theme.GrayLightText
+import ec.gob.pichincha.turismopichincha.viewModel.DestinoViewModel
 
 
 data class DataCard(
@@ -55,8 +62,12 @@ data class DataCard(
 
 //val listEvento = mutableListOf<DataCard>()
 
+@ExperimentalCoilApi
 @Composable
-fun ScreenHome(navegarDetalleSitio: () -> Unit) {
+fun ScreenHome(
+    viewModel:DestinoViewModel = hiltViewModel(),
+    navegarDetalleSitio: (Int) -> Unit,
+) {
     LazyColumn(modifier = Modifier.padding(horizontal = Utils.horizontalPaddingGlobal.dp)) {
         item {
             headerHome(text = "Vive, explora, descubre", text2 = "Pichincha")
@@ -82,19 +93,18 @@ fun ScreenHome(navegarDetalleSitio: () -> Unit) {
             //Seccion de tarjeta de eventos
             subTitle(text = "EVENTOS", 10)
             LazyRow() {
-                repeat(5) {
-                    item {
-                        cardEventos(
-                            navegarDetalleSitio,
-                            data = DataCard(
-                                "Pichincha al aire libre",
-                                "Mejia",
-                                painterResource(id = R.drawable.parque_manantial_de_los_volcanes),
-                                2
-                            )
+                items(viewModel.evantos) { evanto ->
+                    // Todo: Here you can use this evanto to show data accordingly
+                    cardEventos(
+                        navegarDetalleSitio,
+                        data = DataCard(
+                            "Pichincha al aire libre",
+                            "Mejia",
+                            painterResource(id = R.drawable.parque_manantial_de_los_volcanes),
+                            2
                         )
-                        Spacer(modifier = Modifier.width(25.dp))
-                    }
+                    )
+                    Spacer(modifier = Modifier.width(25.dp))
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -102,41 +112,39 @@ fun ScreenHome(navegarDetalleSitio: () -> Unit) {
             //Sección lugares recomenados
             subTitle(text = "LUGARES RECOMENDADOS", 10)
             LazyRow() {
-                repeat(5) {
-                    item {
+                    itemsIndexed(viewModel.recomendados) { idx,recomendado ->
                         cardTopSites(
-                            navegarDetalleSitio,
-                            data = DataCard(
-                                "Volcan COtopaxi",
-                                "Mejia",
-                                painterResource(id = R.drawable.cotopaxi___mejia),
-                                5
-                            ),
-                            Icons.Default.Favorite,
-                            Icons.Default.FavoriteBorder
+                            navegarDetalleSitio = {
+                                              navegarDetalleSitio(idx)
+                            },
+                            title = recomendado.titulo,
+                            subtitle = recomendado.subtitulo,
+                            imageUrl = recomendado.fotos.getOrNull(0) ?: "",
+                            rateNum = recomendado.calificacion,
+                            iconSelected = Icons.Default.Favorite,
+                            iconUnSelected = Icons.Default.FavoriteBorder,
+                            imageRes = R.drawable.cotopaxi___mejia
                         )
                         Spacer(modifier = Modifier.width(25.dp))
                     }
-                }
+
             }
             Spacer(modifier = Modifier.height(10.dp))
 
             //Sección últimas búsquedas
             subTitle(text = "ÚLTIMAS BUSQUEDAS", 10)
             LazyRow() {
-                repeat(5) {
-                    item {
+                    items(viewModel.buscados) { buscado->
                         cardLastSearch(
-                            data = DataCard(
-                                "Laguna de San Marcos",
-                                "Mejia",
-                                painterResource(id = R.drawable.laguna_de_san_marcos)
-                            )
+                                buscado.titulo,
+                                buscado.subtitulo,
+                                buscado.fotos.getOrNull(0),
+                                R.drawable.laguna_de_san_marcos
                         )
                         Spacer(modifier = Modifier.width(25.dp))
                     }
 
-                }
+
             }
 
             spacerBottomGlobal()
@@ -224,7 +232,7 @@ fun subTitle(text: String, verticalPadding: Int) {
 
 @Composable
 private fun cardNoticias(
-    navegarDetalleSitio: () -> Unit,
+    navegarDetalleSitio: (Int) -> Unit,
     data: String,
     painter: Painter
 ) {
@@ -238,7 +246,7 @@ private fun cardNoticias(
             .clickable(
                 enabled = true,
                 onClickLabel = "Detalle",
-                onClick = { navegarDetalleSitio() }
+                onClick = { navegarDetalleSitio(0) }
             )
     ) {
         Image(
@@ -280,7 +288,7 @@ private fun cardNoticias(
 
 
 @Composable
-private fun cardEventos(navegarDetalleSitio: () -> Unit, data: DataCard) {
+private fun cardEventos(navegarDetalleSitio: (Int) -> Unit, data: DataCard) {
     var checkFavoriteIcon by remember {
         mutableStateOf(false)
     }
@@ -296,7 +304,7 @@ private fun cardEventos(navegarDetalleSitio: () -> Unit, data: DataCard) {
             .clickable(
                 enabled = true,
                 onClickLabel = "Detalle",
-                onClick = { navegarDetalleSitio() }
+                onClick = { navegarDetalleSitio(0) }
             )
     ) {
         Column(
@@ -338,8 +346,18 @@ private fun cardEventos(navegarDetalleSitio: () -> Unit, data: DataCard) {
 
 }
 
+@ExperimentalCoilApi
 @Composable
-fun cardTopSites(navegarDetalleSitio: () -> Unit, data: DataCard, iconSelected: ImageVector, iconUnSelected: ImageVector) {
+fun cardTopSites(
+    navegarDetalleSitio: () -> Unit,
+    title:String,
+    subtitle:String,
+    rateNum: Int,
+    iconSelected: ImageVector,
+    iconUnSelected: ImageVector,
+    imageUrl:String?=null,
+    @DrawableRes imageRes: Int?=null
+) {
     var checkFavoriteIcon by remember {
         mutableStateOf(false)
     }
@@ -365,9 +383,17 @@ fun cardTopSites(navegarDetalleSitio: () -> Unit, data: DataCard, iconSelected: 
                     .height(185.dp)
             ) {
                 Image(
-                    painter = data.painter,
+                    painter = rememberImagePainter(
+                        data = imageUrl,
+                        builder = {
+                            imageRes?.let {
+                                error(it)
+                            }
+                        }
+                    ),
                     contentDescription = "Imagen atracción",
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Icon(
                     imageVector = if (checkFavoriteIcon) iconSelected else iconUnSelected,
@@ -385,18 +411,18 @@ fun cardTopSites(navegarDetalleSitio: () -> Unit, data: DataCard, iconSelected: 
             }
 
             Text(
-                text = data.title,
+                text = title,
                 modifier = Modifier
                     .padding(start = 20.dp, end = 20.dp, top = 5.dp),
             )
             Text(
-                text = data.canton,
+                text = subtitle,
                 modifier = Modifier
                     .padding(horizontal = 20.dp, vertical = 5.dp),
                 color = GrayLightText
             )
 
-            imageStarts(rateNum = data.rateNum)
+            imageStarts(rateNum = rateNum)
         }
     }
 }
@@ -419,7 +445,12 @@ fun imageStarts(rateNum: Int) {
 }
 
 @Composable
-private fun cardLastSearch(data: DataCard) {
+private fun cardLastSearch(
+    title:String,
+    canton:String,
+    imageUrl:String? = null,
+    @DrawableRes imageRes:Int?=null
+) {
     var checkFavoriteIcon by remember {
         mutableStateOf(false)
     }
@@ -440,10 +471,17 @@ private fun cardLastSearch(data: DataCard) {
                     .height(210.dp)
             ) {
                 Image(
-                    painter = data.painter,
+                    painter = rememberImagePainter(
+                        data = imageUrl,
+                        builder = {
+                            imageRes?.let {
+                                error(it)
+                            }
+                        }
+                    ),
                     contentDescription = "Imagen atracción",
                     contentScale = ContentScale.FillBounds,
-
+                    modifier = Modifier.fillMaxSize()
                     )
                 Icon(
                     imageVector = if (checkFavoriteIcon) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -462,14 +500,14 @@ private fun cardLastSearch(data: DataCard) {
         }
 
         Text(
-            text = data.title,
+            text = title,
             modifier = Modifier
                 .width(125.dp)
                 .padding(horizontal = 20.dp, vertical = 5.dp),
             textAlign = TextAlign.Center,
         )
         Text(
-            text = data.canton,
+            text = canton,
             modifier = Modifier
                 .width(125.dp)
                 .padding(horizontal = 20.dp, vertical = 5.dp),

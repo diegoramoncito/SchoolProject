@@ -39,6 +39,7 @@ import androidx.navigation.NavHostController
 import coil.compose.ImagePainter
 import coil.compose.rememberImagePainter
 import ec.gob.pichincha.turismopichincha.R
+import ec.gob.pichincha.turismopichincha.model.Recomendado
 import ec.gob.pichincha.turismopichincha.navigation.Screen
 import ec.gob.pichincha.turismopichincha.presentation.components.TabOnlyTextBackWhite
 import ec.gob.pichincha.turismopichincha.presentation.components.buttomGlobal
@@ -46,7 +47,6 @@ import ec.gob.pichincha.turismopichincha.presentation.utilities.Utils
 import ec.gob.pichincha.turismopichincha.ui.theme.GrayBackgroundComponents
 import ec.gob.pichincha.turismopichincha.ui.theme.GrayLightText
 import ec.gob.pichincha.turismopichincha.viewModel.DestinoViewModel
-import okhttp3.internal.Util
 
 data class dataWithIcon(
     val painter: Painter,
@@ -67,9 +67,14 @@ data class dataLink(
 
 //@Preview
 @Composable
-fun ScreenDetalleSitio(idDetalleSitio: String, navController: NavHostController) {
-    topImage()
-    cardMother(navController)
+fun ScreenDetalleSitio(
+    idDetalleSitio: String,
+    navController: NavHostController,
+    viewModel: DestinoViewModel,
+    idx:Int
+) {
+    topImage(viewModel.recomendados[idx].fotos.getOrNull(0))
+    cardMother(navController,viewModel.recomendados[idx])
     Text(text = idDetalleSitio)
 
     spacerBottomGlobal()
@@ -77,10 +82,17 @@ fun ScreenDetalleSitio(idDetalleSitio: String, navController: NavHostController)
 
 //@Preview
 @Composable
-private fun topImage() {
+private fun topImage(
+    imageUrl:String?
+) {
     Image(
-        painter = painterResource(id = R.drawable.cotopaxi___mejia),
-        contentDescription = "Imagen del sitio",
+        painter = rememberImagePainter(
+            data = imageUrl,
+            builder = {
+                error(R.drawable.cotopaxi___mejia)
+            }
+        ),
+        contentDescription = "Imagen atracción",
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .height(200.dp)
@@ -89,7 +101,10 @@ private fun topImage() {
 }
 
 @Composable
-private fun cardMother(navController: NavHostController) {
+private fun cardMother(
+    navController: NavHostController,
+    recomendado: Recomendado
+) {
     Card(
         shape = RoundedCornerShape(topEnd = 55.dp, topStart = 55.dp),
         modifier = Modifier
@@ -103,7 +118,7 @@ private fun cardMother(navController: NavHostController) {
         ) {
             item {
                 //Header
-                headerSite("VOLCÁN COTOPAXI", "Cotopaxi")
+                headerSite(recomendado.titulo,recomendado.subtitulo)
 
                 //estrellas
                 Box(
@@ -112,12 +127,12 @@ private fun cardMother(navController: NavHostController) {
                         .fillMaxWidth()
                         .padding(vertical = 10.dp)
                 ) {
-                    imageStarts(rateNum = 3)
+                    imageStarts(rateNum = recomendado.calificacion)
                 }
 
                 //parrafo
                 Text(
-                    text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, purus sem consequat. Odio sodales magna aliquet eleifend senectus sem posuere per aenean, nam ad nunc magnis congue dignissim taciti fames luctus, maecenas velit torquent pretium tincidunt dictum vestibulum pellentesque. Mi gravida luctus ridiculus ligula vestibulum tincidunt, fermentum porta senectus congue ullamcorper ornare, magnis eget laoreet vitae ac.",
+                    text = recomendado.descripcion,
                     style = MaterialTheme.typography.body1,
                     textAlign = TextAlign.Justify,
                     modifier = Modifier.padding(bottom = 20.dp)
@@ -128,7 +143,7 @@ private fun cardMother(navController: NavHostController) {
 
                 //TAB CODIGO
                 //Pruebas tab fotos
-                tabFotos()
+                tabFotos(recomendado.fotos)
                 //tabActividades
                 val arte = dataWithIcon(
                     painterResource(id = R.drawable.arte_y_arquitectura),
@@ -277,11 +292,7 @@ fun subGroupIndicatorIcons(painter: Painter, value: String, category: String) {
 }
 
 @Composable
-fun tabFotos() {
-    var urlsFotos = listOf(
-        "https://picsum.photos/seed/picsum/200/300",
-        "https://picsum.photos/id/237/200/300"
-    )
+fun tabFotos(urlsFotos:List<String>) {
     LazyRow() {
         items(items = urlsFotos) { urlFoto ->
             cardFotos(url = urlFoto)
