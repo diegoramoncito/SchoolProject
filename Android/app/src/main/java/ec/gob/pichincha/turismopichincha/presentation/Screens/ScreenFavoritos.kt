@@ -31,14 +31,12 @@ fun ScreenFavoritos(navegarDetalleSitio: () -> Unit) {
                 item {
                     cardTopSites(
                         navegarDetalleSitio,
-                        data = DataCard(
                             "Volcan COtopaxi",
                             "Mejia",
-                            painterResource(id = R.drawable.cotopaxi___mejia),
-                            5
-                        ),
+                            5,
                         Icons.Default.Favorite,
-                        Icons.Default.FavoriteBorder
+                        Icons.Default.FavoriteBorder,
+                        imageRes = R.drawable.cotopaxi___mejia
                     )
                     Spacer(modifier = Modifier.height(25.dp))
                 }

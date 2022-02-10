@@ -35,14 +35,12 @@ fun ScreenItinerarios(navegarDetalleSitio: () -> Unit) {
                 item {
                     cardTopSites(
                         navegarDetalleSitio,
-                        data = DataCard(
                             "Volcan COtopaxi",
                             "Mejia",
-                            painterResource(id = R.drawable.laguna_de_san_marcos),
-                            5
-                        ),
+                            5,
                         Icons.Default.Favorite,
-                        Icons.Default.FavoriteBorder
+                        Icons.Default.FavoriteBorder,
+                        imageRes = R.drawable.laguna_de_san_marcos
                     )
                     Spacer(modifier = Modifier.height(25.dp))
                 }
